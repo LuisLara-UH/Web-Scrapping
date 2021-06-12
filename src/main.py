@@ -1,3 +1,3 @@
-def node_init():
+if __name__ == 'main':
     pass
 

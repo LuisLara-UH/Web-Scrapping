@@ -1,4 +1,5 @@
 from node import Node
 
 class ChordNode(Node):
-    pass
+    def get_chord_node(self):
+        return self
