@@ -50,7 +50,9 @@ class Node():
             socket.send_string(rep_msg)
 
     def read_msg(self, msg: message.Message):
-        raise NotImplementedError()
+        if msg.action == message.GET_CHORD_NODE:
+            return message.Message(action=message.RET_CHORD_NODE, parameters=self.chord_node.pack())
+        return None
          
     def request(self, conn_node: NodeReference, msg: message.Message):
         context = zmq.Context()

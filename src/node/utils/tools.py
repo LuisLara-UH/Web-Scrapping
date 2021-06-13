@@ -6,3 +6,7 @@ def find_separator(text: str):
     if len(text) == index:
         return None
     return index
+
+def get_current_ip():
+    # temporal
+    return 'localhost'
