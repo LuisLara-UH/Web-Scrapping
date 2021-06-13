@@ -4,7 +4,7 @@ GET_CHORD_NODE = 'get-chord'
 RET_CHORD_NODE = 'ret-chord'
 
 class Message():
-    def __init__(self, action: str, parameters: str = ''):
+    def __init__(self, action: str = '', parameters: str = ''):
         self.action = action
         self.parameters = parameters
 
