@@ -3,6 +3,15 @@ from .tools import find_separator
 GET_CHORD_NODE = 'get-chord'
 RET_CHORD_NODE = 'ret-chord'
 
+GET_URL_INFO = 'get-url'
+RET_URL_INFO = 'ret-url'
+
+GET_SCRAP_URL = 'get-scrap'
+RET_SCRAP_URL = 'ret-scrap'
+
+GET_CHORD_URL = 'get-chord-url'
+RET_CHORD_URL = 'ret-chord-url'
+
 class Message():
     def __init__(self, action: str = '', parameters: str = ''):
         self.action = action
