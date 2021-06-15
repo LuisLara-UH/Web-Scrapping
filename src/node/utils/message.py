@@ -20,8 +20,11 @@ RET_SUCC_KEY = 'ret-succ-key'
 GET_SUCC_NODE = 'get-succ-node'
 RET_SUCC_NODE = 'ret-succ-node'
 
-GET_PRED_NODE = 'get-pred'
-RET_PRED_NODE = 'ret-pred'
+GET_PRED_KEY = 'get-pred-key'
+RET_PRED_KEY = 'ret-pred-key'
+
+GET_PRED_NODE = 'get-pred-node'
+RET_PRED_NODE = 'ret-pred-node'
 
 GET_POST_FINGER = 'get-post-fing'
 RET_POST_FINGER = 'ret-post-fing'

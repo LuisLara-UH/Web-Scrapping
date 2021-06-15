@@ -31,7 +31,28 @@ class ChordNode(Node):
         if not ret_msg is None:
             return ret_msg
 
-        # fill
+        if msg.action == GET_CHORD_URL:
+            return self.get_url_info(msg.parameters)
+        
+        if msg.action == GET_POST_FINGER:
+            return self.ask_set_finger(msg.parameters)
+        
+        if msg.action == GET_SUCC_KEY:
+            return self.get_succ_key(msg.parameters)
+
+        if msg.action == GET_SUCC_NODE:
+            return self.get_succ_node()
+
+        if msg.action == GET_PRED_KEY:
+            return self.get_pred_key(msg.parameters)
+
+        if msg.action == GET_PRED_NODE:
+            return self.get_pred_node()
+
+        if msg.action == GET_SET_FINGER:
+            return self.set_finger(msg.parameters)
+
+        return Message(action='')
 
     def init_finger_table(self):
         for i in range(0, self.m):
@@ -90,6 +111,33 @@ class ChordNode(Node):
                 return self.finger_table[i]
         return self.my_finger
 
-    
+    # response to messages
+    def get_url_info(self, url: str) -> Message:
+        # Temporal
+        return ret_url_info('Url info')
 
+    def ask_set_finger(self, params: str) -> Message:
+        finger, pos = decode_post_finger(params)
+        if self.finger_table[pos].id > finger.id:
+            self.finger_table[pos] = finger
+        return ret_post_finger()
+
+    def get_pred_key(self, key: str) -> Message:
+        pred_node = self.find_predecessor(int(key))
+        return ret_pred_of_key(pred_node)
+
+    def get_pred_node(self) -> Message:
+        return ret_pred_of_node(self.predecessor())
+
+    def set_finger(self, params: str) -> Message:
+        finger, pos = decode_post_finger(params)
+        self.finger_table[pos] = finger
+        return ret_set_finger()
+
+    def get_succ_key(self, key: str) -> Message:
+        succ_node = self.find_successor(int(key))
+        return ret_succ_of_key(succ_node)
+
+    def get_succ_node(self) -> Message:
+        return ret_succ_of_node(self.successor())
 
