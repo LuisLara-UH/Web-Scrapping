@@ -10,7 +10,7 @@ class ServerNode(Node):
     def request_chord_node(self, url: str):
         req_msg = message.Message(action=message.GET_CHORD_URL, parameters=url)
 
-        rep_msg = self.request(self.chord_node, req_msg)
+        rep_msg = self.sender.request(self.chord_node, req_msg)
         if not rep_msg.action == message.RET_CHORD_URL:
             raise Exception("Invalid answer. Server received action: " + rep_msg.action)
         
