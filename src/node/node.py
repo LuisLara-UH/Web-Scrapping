@@ -7,12 +7,12 @@ from .utils.node_reference import NodeReference
 from .utils.sender import Sender
 
 class Node():
-    def __init__(self, list_port, conn_node: NodeReference):
+    def __init__(self, listen_ip, listen_port, conn_node: NodeReference):
         # sender
         self.sender = Sender()
         # listening ip and port
-        self.ip = get_current_ip()
-        self.port = list_port
+        self.ip = listen_ip
+        self.port = listen_port
         # connecting node address
         self.conn_node: NodeReference = conn_node
         self.chord_node = self.req_chord_node()

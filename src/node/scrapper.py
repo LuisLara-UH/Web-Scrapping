@@ -4,10 +4,10 @@ from .utils import message
 import urllib.request
 
 class ScrapperNode(Node):
-    def __init__(self, list_port, conn_node: NodeReference):
+    def __init__(self, listen_port, conn_node: NodeReference):
         if conn_node is None:
             raise Exception("Scrapper node must receive address of connecting node")
-        super().__init__(list_port, conn_node)
+        super().__init__(listen_port, conn_node)
 
     def get_url_info(self, url: str):
         webUrl = urllib.request.urlopen(url)

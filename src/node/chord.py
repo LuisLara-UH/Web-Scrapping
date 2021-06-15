@@ -7,8 +7,8 @@ from .utils.codifiers import *
 from .utils.chord_messages import *
 
 class ChordNode(Node):
-    def __init__(self, list_port, conn_node: NodeReference):
-        super().__init__(list_port, conn_node)
+    def __init__(self, listen_ip, listen_port, conn_node: NodeReference):
+        super().__init__(listen_ip, listen_port, conn_node)
 
         self.m = 128
         self.id = get_node_id(self.ip + self.port)

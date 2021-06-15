@@ -2,10 +2,10 @@ from .node import Node, NodeReference
 from .utils import message
 
 class ServerNode(Node):
-    def __init__(self, list_port, conn_node: NodeReference):
+    def __init__(self, listen_port, conn_node: NodeReference):
         if conn_node is None:
             raise Exception("Server node must receive address of connecting node")
-        super().__init__(list_port, conn_node)
+        super().__init__(listen_port, conn_node)
 
     def request_chord_node(self, url: str):
         req_msg = message.Message(action=message.GET_CHORD_URL, parameters=url)
