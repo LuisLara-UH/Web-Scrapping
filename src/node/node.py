@@ -32,14 +32,20 @@ class Node():
     def listen(self):
         context = zmq.Context()
         socket = context.socket(zmq.REP)
-        socket.bind("tcp://*" + self.port)
+        socket.bind("tcp://*:" + self.port)
 
         while True:
             rcv_msg = message.Message()
+            print('Listening from port ' + self.port + '...')
             rcv_msg.unpack(socket.recv_string())
+
+            print('Received message:')
+            rcv_msg.pprint()
 
             rep_msg: message.Message = self.read_msg(rcv_msg)
             socket.send_string(rep_msg.pack())
+            print('Replied message:')
+            rep_msg.pprint()
 
     def read_msg(self, msg: message.Message):
         if msg.action == message.GET_CHORD_NODE:

@@ -32,6 +32,9 @@ RET_POST_FINGER = 'ret-post-fing'
 GET_SET_FINGER = 'get-set-fing'
 RET_SET_FINGER = 'ret-set-fing'
 
+GET_SCRAP_NODE = 'get-scrap-node'
+RET_SCRAP_NODE = 'ret-scrap-node'
+
 class Message():
     def __init__(self, action: str = '', parameters: str = ''):
         self.action = action
@@ -48,3 +51,7 @@ class Message():
 
         self.action = msg[:sep_index]
         self.parameters = msg[sep_index + 1:]
+
+    def pprint(self):
+        print('Action: ' + self.action)
+        print('Body: ' + self.parameters)

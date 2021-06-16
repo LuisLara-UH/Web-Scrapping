@@ -1,7 +1,7 @@
 from .node_reference import Finger
 
 def code_finger(finger: Finger):
-    return finger.ip + '%' + finger.port + '%' + finger.id
+    return finger.ip + '%' + finger.port + '%' + str(finger.id)
 
 def decode_finger(text: str):
     props = text.split('%')

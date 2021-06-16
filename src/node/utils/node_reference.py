@@ -1,5 +1,5 @@
 class NodeReference():
-    def __init__(self, ip = None, port = None):
+    def __init__(self, ip = '', port = ''):
         self.ip = ip
         self.port = port
 
@@ -12,11 +12,14 @@ class NodeReference():
     def same_ref(self, node_ref):
         return self.ip == node_ref.ip and self.port == node_ref.port
 
+    def valid_ref(self):
+        return (not self.ip == '') and (not self.port == '')
+
 
 class Finger(NodeReference):
     def __init__(self, ip, port, id):
         super().__init__(ip=ip, port=port)
-        self.id: int = id
+        self.id: int = int(id)
 
     def pack(self):
         return super().pack() + '%' + str(self.id)

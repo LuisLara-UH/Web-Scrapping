@@ -76,3 +76,38 @@ def ret_post_finger():
 
 def ret_url_info(url_info: str):
     return Message(action=RET_CHORD_URL, parameters=url_info)
+
+def req_scrapper_node(sender: Sender, conn_node: NodeReference, sender_node: NodeReference) -> NodeReference:
+    msg = Message(action=GET_SCRAP_NODE, parameters=sender_node.pack())
+    ret_msg = sender.request(conn_node=conn_node, msg=msg)
+
+    assert ret_msg.action == RET_SCRAP_NODE, 'Incorrect reply for get scrapper node'
+
+    scrapper = NodeReference()
+    scrapper.unpack(ret_msg.parameters)
+
+    return scrapper
+
+def ret_scrapper_node(scrapper: NodeReference) -> Message:
+    return Message(action=RET_SCRAP_NODE, parameters=scrapper.pack())
+
+def req_scrap_url(sender: Sender, conn_node: NodeReference, url: str):
+    msg = Message(action=GET_SCRAP_URL, parameters=url)
+    ret_msg = sender.request(conn_node=conn_node, msg=msg)
+
+    assert ret_msg.action == RET_SCRAP_URL, 'Incorrect reply for get scrapper url'
+    assert not ret_msg.parameters == '', 'Invalid url info'
+
+    return ret_msg.parameters
+
+def req_chord_url(sender: Sender, conn_node: NodeReference, url: str):
+    req_msg = Message(action=GET_CHORD_URL, parameters=url)
+    ret_msg = sender.request(conn_node=conn_node, msg=req_msg)
+
+    if not ret_msg.action == RET_CHORD_URL:
+        raise Exception("Invalid answer. Received action: " + ret_msg.action)
+    
+    if ret_msg.parameters == '':
+        raise Exception("Invalid answer. Received empty information at chord node")
+
+    return ret_msg.parameters
