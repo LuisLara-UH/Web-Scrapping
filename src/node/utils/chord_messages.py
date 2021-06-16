@@ -31,13 +31,14 @@ def ret_pred_of_key(node: Finger):
     return Message(action=RET_PRED_KEY, parameters=code_finger(node))
 
 def get_succ_of_node(sender: Sender, conn_node: NodeReference):
+    print('entro aki')
     msg = Message(action=GET_SUCC_NODE)
     ret_msg = sender.request(conn_node, msg=msg)
 
     assert ret_msg.action == RET_SUCC_NODE, "Incorrect reply for succesor node request"
 
     successor = decode_finger(ret_msg.parameters)
-
+    print('Succesor returned from msg:', successor.id)
     return successor
 
 def ret_succ_of_node(node: Finger):

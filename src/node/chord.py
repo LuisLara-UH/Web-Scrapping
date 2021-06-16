@@ -101,6 +101,7 @@ class ChordNode(Node):
     def update_others(self):
         for i in range(1, m):
             pred = self.find_predecessor(chord_number(self.id - 2 ** (i - 1)))
+            print('Predecessor:', pred.id)
             if not self.my_finger.same_ref(pred):
                 req_post_finger(sender=self.sender, conn_node=pred, finger=self.my_finger, pos=i)
 
@@ -113,13 +114,12 @@ class ChordNode(Node):
         while not belongs_to_interval(self.finger_table[index].id, self.id, id):
             index -= 1
 
-        print('Predecessor: ', self.finger_table[index].id)
-
         return req_pred_of_key(sender=self.sender, conn_node=self.finger_table[index], key=id)
 
     def find_successor(self, id: int):
         print('Finding successor of ' + str(id))
         pred_node = self.find_predecessor(id)
+        print('Predecessor: ', pred_node.id)
         if pred_node.same_ref(self.my_finger):
             return self.successor()
         return get_succ_of_node(sender=self.sender, conn_node=pred_node)
@@ -170,8 +170,9 @@ class ChordNode(Node):
 
     def ask_set_finger(self, params: str) -> Message:
         finger, pos = decode_post_finger(params)
-        if self.finger_table[pos].id > finger.id:
+        if belongs_to_interval(finger.id, self.id, self.finger_table[pos].id):
             self.finger_table[pos] = finger
+            req_post_finger(sender=self.sender, conn_node=self.predecessor(), finger=finger, pos=pos)
             print(str(pos) + ' finger changed')
         return ret_post_finger()
 
