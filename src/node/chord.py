@@ -95,6 +95,10 @@ class ChordNode(Node):
         if msg.action == GET_POST_PRED:
             return self.notify_predecessor(msg.parameters)
 
+        if msg.action == GET_SET_URL:
+            self.set_url_info(url_pack=msg.parameters)
+            return ret_set_url()
+
         return Message(action='')
 
     def init_finger_table(self):
@@ -238,4 +242,14 @@ class ChordNode(Node):
             self.finger_table[1] = pred_node
 
         return ret_post_pred()
+
+    def set_url_info(self, url_pack: str):
+        url, url_info = decode_url_info(url_pack=url_pack)
+        url_hash = get_hash(text=url)
+
+        if belongs_to_interval(url_hash, self.predecessor().id, self.id):
+            self.dict_url[url_hash] = url_info
+        else:
+            successor = self.find_successor(id=url_hash)
+            req_set_url(sender=self.sender, conn_node=successor, url=url, url_info=url_info)
 

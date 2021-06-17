@@ -18,6 +18,9 @@ RET_POST_SCRAP_NODE = 'ret-set-scrap-node'
 
 RET_EXCEPTION = 'ret-exc'
 
+GET_SET_URL = 'get-set-url'
+RET_SET_URL = 'ret-set-url'
+
 # Chord message protocols
 GET_SUCC_KEY = 'get-succ-key'
 RET_SUCC_KEY = 'ret-succ-key'

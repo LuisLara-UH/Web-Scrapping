@@ -120,7 +120,17 @@ def req_post_pred(sender: Sender, conn_node: NodeReference, pred_node: Finger):
     req_msg = Message(action=GET_POST_PRED, parameters=pred_node.pack())
     ret_msg = sender.request(conn_node=conn_node, msg=req_msg)
 
-    assert ret_msg.action == RET_POST_PRED, 'Incorrect reply for notify predecessor'
+    assert ret_msg.action == RET_POST_PRED, 'Incorrect reply to notify predecessor'
 
 def ret_post_pred() -> Message:
     return Message(action=RET_POST_PRED)
+
+def req_set_url(sender: Sender, conn_node: NodeReference, url: str, url_info: str):
+    url_pack = code_url_info(url=url, url_info=url_info)
+    req_msg = Message(action=GET_SET_URL, parameters=url_pack)
+    rep_msg = sender.request(conn_node=conn_node, msg=req_msg)
+
+    assert rep_msg.action == RET_SET_URL, 'Incorrect reply to set url info'
+        
+def ret_set_url() -> Message:
+    return Message(action=RET_SET_URL)

@@ -23,3 +23,10 @@ def decode_post_finger(post_finger: str):
     assert len(props) == 4, "Incorrect post finger request received"
 
     return Finger(ip=props[0], port=props[1], id=props[2]), int(props[3]) 
+
+def code_url_info(url: str, url_info: str):
+    return url + '%%' + url_info
+
+def decode_url_info(url_pack: str):
+    url, url_info = url_pack.split('%%')
+    return url, url_info
