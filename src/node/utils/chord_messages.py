@@ -31,7 +31,6 @@ def ret_pred_of_key(node: Finger):
     return Message(action=RET_PRED_KEY, parameters=code_finger(node))
 
 def get_succ_of_node(sender: Sender, conn_node: NodeReference):
-    print('entro aki')
     msg = Message(action=GET_SUCC_NODE)
     ret_msg = sender.request(conn_node, msg=msg)
 
@@ -90,7 +89,11 @@ def req_scrapper_node(sender: Sender, conn_node: NodeReference, sender_node: Nod
     return scrapper
 
 def ret_scrapper_node(scrapper: NodeReference) -> Message:
+    print('ret scrapper node pack')
     return Message(action=RET_SCRAP_NODE, parameters=scrapper.pack())
+
+def ret_post_scrap_node() -> Message:
+    return Message(action=RET_POST_SCRAP_NODE)
 
 def req_scrap_url(sender: Sender, conn_node: NodeReference, url: str):
     msg = Message(action=GET_SCRAP_URL, parameters=url)
@@ -112,3 +115,12 @@ def req_chord_url(sender: Sender, conn_node: NodeReference, url: str):
         raise Exception("Invalid answer. Received empty information at chord node")
 
     return ret_msg.parameters
+
+def req_post_pred(sender: Sender, conn_node: NodeReference, pred_node: Finger):
+    req_msg = Message(action=GET_POST_PRED, parameters=pred_node.pack())
+    ret_msg = sender.request(conn_node=conn_node, msg=req_msg)
+
+    assert ret_msg.action == RET_POST_PRED, 'Incorrect reply for notify predecessor'
+
+def ret_post_pred() -> Message:
+    return Message(action=RET_POST_PRED)

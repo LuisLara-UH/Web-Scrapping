@@ -42,10 +42,14 @@ class Node():
             print('Received message:')
             rcv_msg.pprint()
 
-            rep_msg: message.Message = self.read_msg(rcv_msg)
-            socket.send_string(rep_msg.pack())
-            print('Replied message:')
-            rep_msg.pprint()
+            try:
+                rep_msg: message.Message = self.read_msg(rcv_msg)
+                socket.send_string(rep_msg.pack())
+                print('Replied message:')
+                rep_msg.pprint()
+            except Exception as e:
+                print('Exception:', e)
+                socket.send_string(message.ExceptionMessage().pack())
 
     def read_msg(self, msg: message.Message):
         if msg.action == message.GET_CHORD_NODE:

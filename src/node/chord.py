@@ -1,3 +1,4 @@
+from threading import Thread
 from .node import Node, NodeReference
 from .utils import message
 from .utils.tools import get_current_ip
@@ -5,6 +6,8 @@ from .utils.chord_utils import *
 from .utils.node_reference import Finger
 from .utils.codifiers import *
 from .utils.chord_messages import *
+import time
+import random
 
 class ChordNode(Node):
     def __init__(self, listen_ip, listen_port, conn_node: NodeReference):
@@ -15,7 +18,7 @@ class ChordNode(Node):
         self.my_finger = Finger(self.ip, self.port, self.id)
         self.dict_url = {}
         self.finger_table = [None] * (m + 1)
-        self.scrapper_node = None
+        self.scrapper_nodes = []
 
         self.join()
 
@@ -29,6 +32,26 @@ class ChordNode(Node):
             print('Finger table initialized. Updating other nodes...')
             self.update_others()
             print('Other nodes updated')
+
+    def stabilize(self):
+        while True:
+            if not self.successor().same_ref(self.my_finger):
+                succ_pred = get_pred_of_node(self.sender, self.successor())
+                if belongs_to_interval(succ_pred.id, self.id, self.successor().id):
+                    self.finger_table[1] = succ_pred
+                req_post_pred(self.sender, self.successor(), self.my_finger)
+
+            time.sleep(3)
+
+    def fix_fingers(self):
+        while True:
+            i = random.randint(2, m)
+            succ_node = self.find_successor(finger_number(self.id, i))
+            if not belongs_to_interval(succ_node.id, finger_number(self.id, i), self.id):
+                succ_node = self.my_finger
+            self.finger_table[i] = succ_node
+
+            time.sleep(3)
 
     def req_chord_node(self):
         return self.get_chord_node()
@@ -65,19 +88,23 @@ class ChordNode(Node):
         if msg.action == GET_SCRAP_NODE:
             return self.get_scrapper_node(msg.parameters)
 
+        if msg.action == GET_POST_SCRAP_NODE:
+            self.ask_add_scrap_node(msg.parameters)
+            return ret_post_scrap_node()
+
+        if msg.action == GET_POST_PRED:
+            return self.notify_predecessor(msg.parameters)
+
         return Message(action='')
 
     def init_finger_table(self):
         # request my successor from known node
-        print('Requesting succesor...')
         self.finger_table[1] = req_succ_of_key(sender=self.sender, conn_node=self.conn_node, key=self.id)
         print('Successor: ' + str(self.finger_table[1].id))
         # set my predecessor as my successor's predecessor
-        print('Requesting predecessor...')
         self.finger_table[0] = get_pred_of_node(sender=self.sender, conn_node=self.successor())
         print('Predecessor: ' + str(self.finger_table[0].id))
         # I'm my successors predecessor
-        print('Set myself as my successors predecessor')
         req_set_finger(sender=self.sender, conn_node=self.successor(), finger=self.my_finger, pos=0)
 
         print('Initializing fingers...')
@@ -86,7 +113,6 @@ class ChordNode(Node):
                 self.finger_table[i + 1] = self.finger_table[i]
             else:
                 succ_node = self.find_successor(finger_number(self.id, i + 1))
-                #succ_node = req_succ_of_key(sender=self.sender, conn_node=self.conn_node, key=finger_number(self.id, i + 1))
                 if not belongs_to_interval(succ_node.id, finger_number(self.id, i + 1), self.id):
                     succ_node = self.my_finger
                 self.finger_table[i + 1] = succ_node
@@ -99,14 +125,12 @@ class ChordNode(Node):
         return self.finger_table[1]
 
     def update_others(self):
-        for i in range(1, m):
+        for i in range(1, m + 1):
             pred = self.find_predecessor(chord_number(self.id - 2 ** (i - 1)))
-            print('Predecessor:', pred.id)
             if not self.my_finger.same_ref(pred):
                 req_post_finger(sender=self.sender, conn_node=pred, finger=self.my_finger, pos=i)
 
     def find_predecessor(self, id: int):
-        print('Finding predecessor of ' + str(id))
         if self.successor().id == self.id or belongs_to_interval(id, self.id, self.successor().id):
             return self.my_finger
 
@@ -117,9 +141,7 @@ class ChordNode(Node):
         return req_pred_of_key(sender=self.sender, conn_node=self.finger_table[index], key=id)
 
     def find_successor(self, id: int):
-        print('Finding successor of ' + str(id))
         pred_node = self.find_predecessor(id)
-        print('Predecessor: ', pred_node.id)
         if pred_node.same_ref(self.my_finger):
             return self.successor()
         return get_succ_of_node(sender=self.sender, conn_node=pred_node)
@@ -138,12 +160,12 @@ class ChordNode(Node):
             try:
                 return ret_url_info(self.dict_url[url_hash])
             except KeyError:
-                if not self.scrapper_node:
-                    scrapper = req_scrapper_node(sender=self.sender, conn_node=self.successor(), sender_node=sender_node)
-                    assert scrapper.valid_ref(), 'No scrapper node found'
-                    self.scrapper_node = scrapper
+                if len(self.scrapper_nodes) == 0:
+                    my_ref = NodeReference(self.ip, self.port)
+                    self.get_scrapper_node(my_ref.pack())
                 
-                url_info = req_scrap_url(sender=self.sender, conn_node=self.scrapper_node, url=url)
+                assert len(self.scrapper_nodes) > 0, 'No scrapper nodes found'
+                url_info = req_scrap_url(sender=self.sender, conn_node=self.scrapper_nodes[0], url=url)
                 self.dict_url[url_hash] = url_info
         else:
             successor = self.find_successor(id=url_hash)
@@ -155,16 +177,14 @@ class ChordNode(Node):
         sender = NodeReference()
         sender.unpack(sender_node)
 
-        if sender.same_ref(self.my_finger):
-            return ret_scrapper_node(NodeReference())
+        if len(self.scrapper_nodes) > 0:
+            return ret_scrapper_node(self.scrapper_nodes[0])
 
-        if self.scrapper_node:
-            return ret_scrapper_node(self.scrapper_node)
+        assert not sender.same_ref(self.successor()), 'Scrapper node not found'
+        scrapper = req_scrapper_node(sender=self.sender, conn_node=self.successor(), sender_node=sender)
 
-        scrapper = req_scrapper_node(sender=self.sender, conn_node=self.successor(), sender_node=sender_node)
-
-        if not self.scrapper_node and scrapper.valid_ref():
-            self.scrapper_node = scrapper
+        if scrapper.valid_ref():
+            self.scrapper_nodes.append(scrapper)
 
         return ret_scrapper_node(scrapper=scrapper)
 
@@ -172,7 +192,9 @@ class ChordNode(Node):
         finger, pos = decode_post_finger(params)
         if belongs_to_interval(finger.id, self.id, self.finger_table[pos].id):
             self.finger_table[pos] = finger
-            req_post_finger(sender=self.sender, conn_node=self.predecessor(), finger=finger, pos=pos)
+
+            if not finger.same_ref(self.predecessor()):
+                req_post_finger(sender=self.sender, conn_node=self.predecessor(), finger=finger, pos=pos)
             print(str(pos) + ' finger changed')
         return ret_post_finger()
 
@@ -199,4 +221,21 @@ class ChordNode(Node):
     def get_succ_node(self) -> Message:
         print('Successor node found: ' + str(self.successor().id))
         return ret_succ_of_node(self.successor())
+
+    def ask_add_scrap_node(self, scrapper_node: str):
+        scrap_node = NodeReference()
+        scrap_node.unpack(text=scrapper_node)
+
+        assert scrap_node.valid_ref(), 'Invalid scrapper node received'
+
+        self.scrapper_nodes.append(scrap_node)
+
+    def notify_predecessor(self, node: str):
+        pred_node = Finger()
+        pred_node.unpack(text=node)
+
+        if belongs_to_interval(pred_node.id, self.id, self.successor().id):
+            self.finger_table[1] = pred_node
+
+        return ret_post_pred()
 

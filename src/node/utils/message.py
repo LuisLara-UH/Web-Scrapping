@@ -13,6 +13,11 @@ RET_SCRAP_URL = 'ret-scrap'
 GET_CHORD_URL = 'get-chord-url'
 RET_CHORD_URL = 'ret-chord-url'
 
+GET_POST_SCRAP_NODE = 'get-set-scrap-node'
+RET_POST_SCRAP_NODE = 'ret-set-scrap-node'
+
+RET_EXCEPTION = 'ret-exc'
+
 # Chord message protocols
 GET_SUCC_KEY = 'get-succ-key'
 RET_SUCC_KEY = 'ret-succ-key'
@@ -35,6 +40,9 @@ RET_SET_FINGER = 'ret-set-fing'
 GET_SCRAP_NODE = 'get-scrap-node'
 RET_SCRAP_NODE = 'ret-scrap-node'
 
+GET_POST_PRED = 'get-post-pred'
+RET_POST_PRED = 'ret-post-pred'
+
 class Message():
     def __init__(self, action: str = '', parameters: str = ''):
         self.action = action
@@ -55,3 +63,7 @@ class Message():
     def pprint(self):
         print('Action: ' + self.action)
         print('Body: ' + self.parameters)
+
+class ExceptionMessage(Message):
+    def __init__(self):
+        super().__init__(action=RET_EXCEPTION)
