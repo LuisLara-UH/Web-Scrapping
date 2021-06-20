@@ -7,6 +7,7 @@ def find_separator(text: str):
         return None
     return index
 
+
 def get_current_ip():
     # temporal
     return 'localhost'

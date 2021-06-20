@@ -1,5 +1,10 @@
+import threading
+
 from node.node import NodeReference
 from node.utils.message import Message
+from create_chord_node import start_chord_node
+from node.scrapper import ScrapperNode
+
 
 def test_message():
     actions = ['get', 'get-chord', 'ret-chord']
@@ -17,7 +22,6 @@ def test_message():
         assert msg.action == actions[i], "Action not unpacked correctly"
         assert msg.parameters == parameters[i], "Parameters not unpacked correctly"
 
-from node.scrapper import ScrapperNode
 
 def test_scrapper():
     scrapper = ScrapperNode('8880', NodeReference('localhost', '8881'))
@@ -26,10 +30,6 @@ def test_scrapper():
     for url in urls:
         print(scrapper.get_url_info(url=url))
 
-print('Testing message...')
-test_message()
 
-print('Testing scrapper...')
-test_scrapper()
-
-print('Testing succesful')
+threading.Thread(target=start_chord_node, args=('localhost', '8880')).start()
+threading.Thread(target=start_chord_node, args=('localhost', '8881', 'localhost', '8880')).start()

@@ -1,5 +1,5 @@
-class NodeReference():
-    def __init__(self, ip = '', port = ''):
+class NodeReference:
+    def __init__(self, ip='', port=''):
         self.ip = ip
         self.port = port
 
@@ -17,12 +17,16 @@ class NodeReference():
 
 
 class Finger(NodeReference):
-    def __init__(self, ip, port, id):
+    def __init__(self, ip='', port='', finger_id=0):
         super().__init__(ip=ip, port=port)
-        self.id: int = int(id)
+        self.id: int = int(finger_id)
 
     def pack(self):
         return super().pack() + '%' + str(self.id)
 
     def unpack(self, text: str):
-        self.ip, self.port, self.id = text.split('%')
+        args = text.split('%')
+        assert len(args) == 3, 'Incorrect finger received'
+        self.ip = args[0]
+        self.port = args[1]
+        self.id = int(args[2])

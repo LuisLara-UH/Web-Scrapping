@@ -1,8 +1,6 @@
-# import requests
 import re
 from bs4 import BeautifulSoup
 import urllib.request
-import requests
 
 
 # http://www.cubaeduca.cu
@@ -62,7 +60,7 @@ class WebNode:
                 res.append(link)
         return res
 
-    def get_html_list(self, links:list):
+    def get_html_list(self, links: list):
         html_list = []
         for link in links:
             try:

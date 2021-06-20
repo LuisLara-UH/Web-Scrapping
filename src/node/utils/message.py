@@ -18,6 +18,8 @@ RET_POST_SCRAP_NODE = 'ret-set-scrap-node'
 
 RET_EXCEPTION = 'ret-exc'
 
+RET_NOT_REP = 'ret-not-rep'
+
 GET_SET_URL = 'get-set-url'
 RET_SET_URL = 'ret-set-url'
 
@@ -46,10 +48,14 @@ RET_SCRAP_NODE = 'ret-scrap-node'
 GET_POST_PRED = 'get-post-pred'
 RET_POST_PRED = 'ret-post-pred'
 
-class Message():
+GET_CHECK_NODE = 'get-check-node'
+RET_CHECK_NODE = 'ret-check-node'
+
+
+class Message:
     def __init__(self, action: str = '', parameters: str = ''):
         self.action = action
-        self.parameters = parameters
+        self.parameters = str(parameters)
 
     def pack(self):
         return self.action + '%' + self.parameters
@@ -66,6 +72,7 @@ class Message():
     def pprint(self):
         print('Action: ' + self.action)
         print('Body: ' + self.parameters)
+
 
 class ExceptionMessage(Message):
     def __init__(self):

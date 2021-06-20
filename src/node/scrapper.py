@@ -1,11 +1,10 @@
 from node.utils.codifiers import code_url_info
 import threading
 
-from node.utils.chord_messages import req_post_finger
-from zmq.sugar.frame import Message
 from .node import Node, NodeReference
 from .utils import message
 from .utils.web_node import WebNode
+
 
 class ScrapperNode(Node):
     def __init__(self, listen_ip, listen_port, conn_node: NodeReference):
@@ -31,15 +30,15 @@ class ScrapperNode(Node):
             url = web_node.level_one_links[index]
             url_info = web_node.level_one_html[index]
             self.req_set_url_info(url=url, url_info=url_info)
-        
+
         for index in range(len(web_node.level_two_links)):
             url = web_node.level_two_links[index]
             url_info = web_node.level_two_html[index]
-            self.req_set_url_info(url=web_node.level_two_links, url_info=web_node.level_two_html)
+            self.req_set_url_info(url=url, url_info=url_info)
 
     def read_msg(self, msg: message.Message):
         ret_msg = super().read_msg(msg)
-        if not ret_msg is None:
+        if ret_msg is not None:
             return ret_msg
 
         if not msg.action == message.GET_SCRAP_URL:
@@ -47,21 +46,21 @@ class ScrapperNode(Node):
 
         url_info = self.get_url_info(msg.parameters)
         if url_info is None or url_info == '':
-            raise Exception("Couldnt read from " + msg.parameters)
+            raise Exception("Couldn't read from " + msg.parameters)
 
         return message.Message(action=message.RET_SCRAP_URL, parameters=url_info)
 
     def req_set_scrap_node(self, chord_node: NodeReference):
-        req_msg = message.Message(action=message.GET_POST_SCRAP_NODE, parameters=NodeReference(ip=self.ip, port=self.port).pack())
+        req_msg = message.Message(action=message.GET_POST_SCRAP_NODE,
+                                  parameters=NodeReference(ip=self.ip, port=self.port).pack())
         rep_msg = self.sender.request(chord_node, req_msg)
-        
+
         if not rep_msg.action == message.RET_POST_SCRAP_NODE:
             raise Exception("Invalid answer. Scrapper received action: " + rep_msg.action)
 
     def req_set_url_info(self, url: str, url_info: str):
-        url_pack = code_url_info(url=url, url_info=url_info)
+        url_pack = code_url_info(url=str(url), url_info=str(url_info))
         req_msg = message.Message(action=message.GET_SET_URL, parameters=url_pack)
         rep_msg = self.sender.request(self.chord_node, req_msg)
 
         assert rep_msg.action == message.RET_SET_URL, 'Invalid answer. Scrapper received action: ' + rep_msg.action
-        

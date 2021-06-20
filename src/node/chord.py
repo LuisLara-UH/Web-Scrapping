@@ -1,24 +1,23 @@
-from threading import Thread
-from .node import Node, NodeReference
+from .node import Node
 from .utils import message
 from .utils.tools import get_current_ip
 from .utils.chord_utils import *
-from .utils.node_reference import Finger
-from .utils.codifiers import *
 from .utils.chord_messages import *
 import time
 import random
+
 
 class ChordNode(Node):
     def __init__(self, listen_ip, listen_port, conn_node: NodeReference):
         super().__init__(listen_ip, listen_port, conn_node)
 
-        self.id = get_hash(self.ip + self.port)
+        self.id: int = get_hash(self.ip + self.port)
         print('Id: ', self.id)
         self.my_finger = Finger(self.ip, self.port, self.id)
         self.dict_url = {}
         self.finger_table = [None] * (m + 1)
         self.scrapper_nodes = []
+        self.successors = []
 
         self.join()
 
@@ -35,23 +34,77 @@ class ChordNode(Node):
 
     def stabilize(self):
         while True:
-            if not self.successor().same_ref(self.my_finger):
-                succ_pred = get_pred_of_node(self.sender, self.successor())
-                if belongs_to_interval(succ_pred.id, self.id, self.successor().id):
-                    self.finger_table[1] = succ_pred
-                req_post_pred(self.sender, self.successor(), self.my_finger)
+            print('Stabilizing...')
+            try:
+                if not self.successor().same_ref(self.my_finger):
+                    print('Stabilizing...1')
+                    succ_pred = get_pred_of_node(self.sender, self.successor())
+                    print(succ_pred.id)
+                    print('Stabilizing...2')
+                    if belongs_to_interval(succ_pred.id, self.id, self.successor().id):
+                        self.finger_table[1] = succ_pred
+                    req_post_pred(self.sender, self.successor(), self.my_finger)
+                    print('Stabilizing...3')
+            except Exception as e:
+                print('Exception: ', e)
+
+            self.check_successor()
+            self.fix_fingers()
 
             time.sleep(3)
 
+    def check_successor(self):
+        print('Checking successor...')
+        if len(self.successors) == 0 and not self.my_finger.same_ref(self.successor()):
+            self.successors.append(self.successor())
+
+        print('Checking successor...1')
+        self.update_successors()
+        print('Checking successor...2')
+
+    def update_successors(self):
+        while len(self.successors) > 0:
+            print('Checking successor...3')
+            rep_msg = req_check_node(self.sender, self.successors[0])
+            print('Checking successor...4')
+            if rep_msg.action == RET_NOT_REP:
+                self.successors.pop(0)
+            elif not rep_msg.action == RET_CHECK_NODE:
+                print('Exception: Incorrect answer to check successor')
+                return
+            else:
+                break
+
+        print('Checking successor...5')
+
+        while 5 > len(self.successors) > 0:
+            print('Checking successor...6')
+            rep_msg = self.sender.request(self.successors[len(self.successors) - 1], Message(action=GET_SUCC_NODE))
+            print('Checking successor...7')
+            if rep_msg.action == RET_NOT_REP:
+                self.successors.pop(len(self.successors) - 1)
+            elif rep_msg.action == RET_SUCC_NODE:
+                succ_node = decode_finger(rep_msg.parameters)
+                if succ_node.same_ref(self.my_finger):
+                    break
+                self.successors.append(succ_node)
+
+        print('Checking successor...8')
+        if len(self.successors) > 0:
+            self.finger_table[1] = self.successors[0]
+        else:
+            self.finger_table[1] = self.my_finger
+
     def fix_fingers(self):
-        while True:
-            i = random.randint(2, m)
+        print('Fixing fingers...')
+        i = random.randint(2, m)
+        try:
             succ_node = self.find_successor(finger_number(self.id, i))
             if not belongs_to_interval(succ_node.id, finger_number(self.id, i), self.id):
                 succ_node = self.my_finger
             self.finger_table[i] = succ_node
-
-            time.sleep(3)
+        except Exception as e:
+            print('Exception: ', e)
 
     def req_chord_node(self):
         return self.get_chord_node()
@@ -61,15 +114,15 @@ class ChordNode(Node):
 
     def read_msg(self, msg: message.Message):
         ret_msg = super().read_msg(msg)
-        if not ret_msg is None:
+        if ret_msg is not None:
             return ret_msg
 
         if msg.action == GET_CHORD_URL:
             return self.get_url_info(msg.parameters)
-        
+
         if msg.action == GET_POST_FINGER:
             return self.ask_set_finger(msg.parameters)
-        
+
         if msg.action == GET_SUCC_KEY:
             return self.get_succ_key(msg.parameters)
 
@@ -98,6 +151,9 @@ class ChordNode(Node):
         if msg.action == GET_SET_URL:
             self.set_url_info(url_pack=msg.parameters)
             return ret_set_url()
+
+        if msg.action == GET_CHECK_NODE:
+            return ret_check_node()
 
         return Message(action='')
 
@@ -134,15 +190,15 @@ class ChordNode(Node):
             if not self.my_finger.same_ref(pred):
                 req_post_finger(sender=self.sender, conn_node=pred, finger=self.my_finger, pos=i)
 
-    def find_predecessor(self, id: int):
-        if self.successor().id == self.id or belongs_to_interval(id, self.id, self.successor().id):
+    def find_predecessor(self, finger_id: int):
+        if self.successor().id == self.id or belongs_to_interval(finger_id, self.id, self.successor().id):
             return self.my_finger
 
         index = m - 1
-        while not belongs_to_interval(self.finger_table[index].id, self.id, id):
+        while not belongs_to_interval(self.finger_table[index].id, self.id, finger_id):
             index -= 1
 
-        return req_pred_of_key(sender=self.sender, conn_node=self.finger_table[index], key=id)
+        return req_pred_of_key(sender=self.sender, conn_node=self.finger_table[index], key=finger_id)
 
     def find_successor(self, id: int):
         pred_node = self.find_predecessor(id)
@@ -159,7 +215,7 @@ class ChordNode(Node):
     # response to messages
     def get_url_info(self, url: str) -> Message:
         url_hash: int = get_hash(url)
-        url_info = ''
+
         if belongs_to_interval(url_hash, self.predecessor().id, self.id):
             try:
                 return ret_url_info(self.dict_url[url_hash])
@@ -167,7 +223,7 @@ class ChordNode(Node):
                 if len(self.scrapper_nodes) == 0:
                     my_ref = NodeReference(self.ip, self.port)
                     self.get_scrapper_node(my_ref.pack())
-                
+
                 assert len(self.scrapper_nodes) > 0, 'No scrapper nodes found'
                 url_info = req_scrap_url(sender=self.sender, conn_node=self.scrapper_nodes[0], url=url)
                 self.dict_url[url_hash] = url_info
@@ -219,7 +275,7 @@ class ChordNode(Node):
 
     def get_succ_key(self, key: str) -> Message:
         succ_node = self.find_successor(int(key))
-        print('Succesor of key ' + str(key) + ' found: ' + str(succ_node.id))
+        print('Successor of key ' + str(key) + ' found: ' + str(succ_node.id))
         return ret_succ_of_key(succ_node)
 
     def get_succ_node(self) -> Message:
@@ -238,8 +294,7 @@ class ChordNode(Node):
         pred_node = Finger()
         pred_node.unpack(text=node)
 
-        if belongs_to_interval(pred_node.id, self.id, self.successor().id):
-            self.finger_table[1] = pred_node
+        self.finger_table[0] = pred_node
 
         return ret_post_pred()
 
@@ -248,8 +303,8 @@ class ChordNode(Node):
         url_hash = get_hash(text=url)
 
         if belongs_to_interval(url_hash, self.predecessor().id, self.id):
+            print('Url saved:', url)
             self.dict_url[url_hash] = url_info
         else:
             successor = self.find_successor(id=url_hash)
             req_set_url(sender=self.sender, conn_node=successor, url=url, url_info=url_info)
-
