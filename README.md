@@ -2,7 +2,8 @@
 > Nadia González Fernández C412
 >
 > Luis Alejandro Lara Rojas
-
+>
+> https://github.com/LuisLara-UH/Web-Scrapping
 ## Cómo correr el sistema
 
 Nuestro sistema distribuido tiene 3 tipos de nodos:
