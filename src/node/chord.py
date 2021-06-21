@@ -13,6 +13,7 @@ class ChordNode(Node):
 
         self.id: int = get_hash(self.ip + self.port)
         print('Id: ', self.id)
+        print()
         self.my_finger = Finger(self.ip, self.port, self.id)
         self.dict_url = {}
         self.finger_table = [None] * (m + 1)
@@ -38,7 +39,6 @@ class ChordNode(Node):
             try:
                 if not self.successor().same_ref(self.my_finger):
                     succ_pred = get_pred_of_node(self.sender, self.successor())
-                    print(succ_pred.id)
                     if belongs_to_interval(succ_pred.id, self.id, self.successor().id) and \
                             not req_check_node(self.sender, succ_pred).action == RET_NOT_REP:
                         self.finger_table[1] = succ_pred
@@ -59,7 +59,6 @@ class ChordNode(Node):
             self.successors = [self.successor()] + self.successors
 
         self.update_successors()
-        print('Successors:', str(len(self.successors)))
 
     def update_successors(self):
         while len(self.successors) > 0:
@@ -103,6 +102,7 @@ class ChordNode(Node):
             self.finger_table[i] = succ_node
         except Exception as e:
             print('Exception: ', e)
+        print()
 
     def update_succ_dict(self):
         if (not self.successor().same_ref(self.my_finger)) and not self.predecessor().same_ref(self.my_finger):
@@ -269,31 +269,25 @@ class ChordNode(Node):
 
             if not finger.same_ref(self.predecessor()):
                 req_post_finger(sender=self.sender, conn_node=self.predecessor(), finger=finger, pos=pos)
-            print(str(pos) + ' finger changed')
         return ret_post_finger()
 
     def get_pred_key(self, key: str) -> Message:
         pred_node = self.find_predecessor(int(key))
-        print('Predecessor of key ' + str(key) + ' found: ' + str(pred_node.id))
         return ret_pred_of_key(pred_node)
 
     def get_pred_node(self) -> Message:
-        print('Predecessor node found: ' + str(self.predecessor().id))
         return ret_pred_of_node(self.predecessor())
 
     def set_finger(self, params: str) -> Message:
         finger, pos = decode_post_finger(params)
         self.finger_table[pos] = finger
-        print(str(pos) + ' finger changed')
         return ret_set_finger()
 
     def get_succ_key(self, key: str) -> Message:
         succ_node = self.find_successor(int(key))
-        print('Successor of key ' + str(key) + ' found: ' + str(succ_node.id))
         return ret_succ_of_key(succ_node)
 
     def get_succ_node(self) -> Message:
-        print('Successor node found: ' + str(self.successor().id))
         return ret_succ_of_node(self.successor())
 
     def ask_add_scrap_node(self, scrapper_node: str):
@@ -317,7 +311,6 @@ class ChordNode(Node):
         url_hash = get_hash(text=url)
 
         if belongs_to_interval(url_hash, self.predecessor().id, self.id):
-            print('Url saved:', url)
             self.dict_url[url_hash] = url_info
         else:
             successor = self.find_successor(id=url_hash)

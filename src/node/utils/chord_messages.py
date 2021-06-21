@@ -41,7 +41,6 @@ def get_succ_of_node(sender: Sender, conn_node: NodeReference):
     assert ret_msg.action == RET_SUCC_NODE, "Incorrect reply for successor node request"
 
     successor = decode_finger(ret_msg.parameters)
-    print('Successor returned from msg:', successor.id)
     return successor
 
 
@@ -103,7 +102,6 @@ def req_scrapper_node(sender: Sender, conn_node: NodeReference, sender_node: Nod
 
 
 def ret_scrapper_node(scrapper: NodeReference) -> Message:
-    print('ret scrapper node pack')
     return Message(action=RET_SCRAP_NODE, parameters=scrapper.pack())
 
 

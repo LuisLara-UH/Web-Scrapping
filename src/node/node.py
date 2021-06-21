@@ -40,6 +40,7 @@ class Node:
         while True:
             rcv_msg = message.Message()
             print('Listening from port ' + self.port + '...')
+            print()
             msg = socket.recv_multipart()
             identity = msg[0]
             rcv_msg.unpack(msg[1].decode().strip('\n'))
@@ -55,6 +56,7 @@ class Node:
             except Exception as e:
                 print('Exception:', e)
                 socket.send_multipart([identity, str(message.ExceptionMessage().pack()).encode()])
+            print()
 
     def read_msg(self, msg: message.Message):
         if msg.action == message.GET_CHORD_NODE:
