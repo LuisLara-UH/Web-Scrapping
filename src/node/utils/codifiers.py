@@ -52,7 +52,11 @@ def code_url_dict(url_dict):
 def decode_url_dict(url_dict: str):
     args = url_dict.split('%%')
     new_dict = {}
-    while len(args) > 1:
-        new_dict[int(args.pop(0))] = args.pop(0)
+    while len(args) > 0:
+        url = int(args.pop(0))
+        url_info = args.pop(0)
+        print('Url:', str(url))
+        print('Url_info:', url_info)
+        new_dict[url] = url_info
 
     return new_dict

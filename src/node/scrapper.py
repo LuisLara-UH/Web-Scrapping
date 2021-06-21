@@ -21,6 +21,7 @@ class ScrapperNode(Node):
         thread = threading.Thread(target=self.send_urls_info, args=[web_node])
         thread.start()
 
+        print('Se escrapeo:', web_node.html)
         return web_node.html
 
     def send_urls_info(self, web_node: WebNode):
@@ -46,7 +47,8 @@ class ScrapperNode(Node):
 
         url_info = self.get_url_info(msg.parameters)
         if url_info is None or url_info == '':
-            raise Exception("Couldn't read from " + msg.parameters)
+            url_info = ''
+            print("Couldn't read from " + msg.parameters)
 
         return message.Message(action=message.RET_SCRAP_URL, parameters=url_info)
 

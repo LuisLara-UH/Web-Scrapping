@@ -105,6 +105,14 @@ def ret_scrapper_node(scrapper: NodeReference) -> Message:
     return Message(action=RET_SCRAP_NODE, parameters=scrapper.pack())
 
 
+def req_post_scrap_node(sender: Sender, conn_node: NodeReference, scrapper: NodeReference):
+    req_msg = Message(action=GET_POST_SCRAP_NODE,
+                                parameters=scrapper.pack())
+    rep_msg = sender.request(conn_node, req_msg)
+
+    if not rep_msg.action == RET_POST_SCRAP_NODE:
+        raise Exception("Invalid answer. Scrapper received action: " + rep_msg.action)
+
 def ret_post_scrap_node() -> Message:
     return Message(action=RET_POST_SCRAP_NODE)
 
@@ -114,7 +122,6 @@ def req_scrap_url(sender: Sender, conn_node: NodeReference, url: str):
     ret_msg = sender.request(conn_node=conn_node, msg=msg, wait_time=180000)
 
     assert ret_msg.action == RET_SCRAP_URL, 'Incorrect reply for get scrapper url'
-    assert not ret_msg.parameters == '', 'Invalid url info'
 
     return ret_msg.parameters
 

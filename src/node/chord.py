@@ -44,11 +44,12 @@ class ChordNode(Node):
                         self.finger_table[1] = succ_pred
                     req_post_pred(self.sender, self.successor(), self.my_finger)
             except Exception as e:
-                print('Exception: ', e)
+                print('Exception stabilizing: ', e)
 
             self.check_successor()
             self.fix_fingers()
             self.update_succ_dict()
+            self.send_scrapper()
 
             time.sleep(random.randint(3, 10))
 
@@ -64,7 +65,6 @@ class ChordNode(Node):
         while len(self.successors) > 0:
             rep_msg = req_check_node(self.sender, self.successors[0])
             if rep_msg.action == RET_NOT_REP:
-                print('Deleted successor cause not reply1:', self.successors[0].id)
                 self.successors.pop(0)
             elif not rep_msg.action == RET_CHECK_NODE:
                 print('Exception: Incorrect answer to check successor')
@@ -75,7 +75,6 @@ class ChordNode(Node):
         while 5 > len(self.successors) > 0:
             rep_msg = self.sender.request(self.successors[-1], Message(action=GET_SUCC_NODE))
             if rep_msg.action == RET_NOT_REP:
-                print('Deleted successor cause not reply2:', self.successors[-1].id)
                 self.successors.pop(len(self.successors) - 1)
             elif rep_msg.action == RET_SUCC_NODE:
                 succ_node = decode_finger(rep_msg.parameters)
@@ -101,7 +100,7 @@ class ChordNode(Node):
                 succ_node = self.my_finger
             self.finger_table[i] = succ_node
         except Exception as e:
-            print('Exception: ', e)
+            print('Exception fixing fingers: ', e)
         print()
 
     def update_succ_dict(self):
@@ -112,9 +111,14 @@ class ChordNode(Node):
                     dict_to_send[key] = self.dict_url[key]
 
             try:
-                req_post_url_dict(sender=self.sender, conn_node=self.successor(), url_dict=dict_to_send)
+                if len(dict_to_send.keys()) > 0:
+                    req_post_url_dict(sender=self.sender, conn_node=self.successor(), url_dict=dict_to_send)
             except Exception as e:
-                print('Exception:', e)
+                print('Exception updating dictionary:', e)
+
+    def send_scrapper(self):
+        if len(self.scrapper_nodes) > 0 and not self.my_finger.same_ref(self.successor()):
+            req_post_scrap_node(self.sender, self.successor(), self.scrapper_nodes[0])
 
     def req_chord_node(self):
         return self.get_chord_node()
@@ -229,19 +233,25 @@ class ChordNode(Node):
     # response to messages
     def get_url_info(self, url: str) -> Message:
         url_hash: int = get_hash(url)
-
+        print('-1')
         if belongs_to_interval(url_hash, self.predecessor().id, self.id):
             try:
+                print('-0.5')
                 return ret_url_info(self.dict_url[url_hash])
             except KeyError:
+                print('0')
                 if len(self.scrapper_nodes) == 0:
                     my_ref = NodeReference(self.ip, self.port)
                     self.get_scrapper_node(my_ref.pack())
-
+                print('1')
                 assert len(self.scrapper_nodes) > 0, 'No scrapper nodes found'
                 url_info = req_scrap_url(sender=self.sender, conn_node=self.scrapper_nodes[0], url=url)
-                self.dict_url[url_hash] = url_info
+                print('2')
+                if not url_info == '':
+                    print('3')
+                    self.dict_url[url_hash] = url_info
         else:
+            print('4')
             successor = self.find_successor(id=url_hash)
             url_info = req_chord_url(self.sender, successor, url)
 
@@ -297,6 +307,10 @@ class ChordNode(Node):
         assert scrap_node.valid_ref(), 'Invalid scrapper node received'
 
         self.scrapper_nodes.append(scrap_node)
+        for scrapper in self.scrapper_nodes[:-1]:
+            if scrap_node.same_ref(scrapper):
+                self.scrapper_nodes.pop()
+                break
 
     def notify_predecessor(self, node: str):
         pred_node = Finger()
@@ -311,7 +325,8 @@ class ChordNode(Node):
         url_hash = get_hash(text=url)
 
         if belongs_to_interval(url_hash, self.predecessor().id, self.id):
-            self.dict_url[url_hash] = url_info
+            if not url_info == '':
+                self.dict_url[url_hash] = url_info
         else:
             successor = self.find_successor(id=url_hash)
             req_set_url(sender=self.sender, conn_node=successor, url=url, url_info=url_info)
@@ -319,4 +334,5 @@ class ChordNode(Node):
     def update_url_dict(self, url_dict: str):
         dict_decoded = decode_url_dict(url_dict)
         for key in dict_decoded.keys():
-            self.dict_url[key] = dict_decoded[key]
+            if not dict_decoded[key] == '':
+                self.dict_url[key] = dict_decoded[key]

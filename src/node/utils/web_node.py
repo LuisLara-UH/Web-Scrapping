@@ -36,7 +36,7 @@ class WebNode:
         try:
             self.html = urllib.request.urlopen(self.url).read()
         except Exception as e:
-            self.html = str(e)
+            self.html = ''
             return
 
         self.level_one_links = self.find_links_in_html(self.html)
@@ -58,7 +58,6 @@ class WebNode:
             belongs_to_domain = re.search(self.domain, link)
             if belongs_to_domain:
                 res.append(link)
-        print('res', res)
         return res
 
     def get_html_list(self, links: list):
@@ -67,5 +66,5 @@ class WebNode:
             try:
                 html_list.append(urllib.request.urlopen(link).read())
             except Exception as e:
-                html_list.append(str(e))
+                html_list.append('')
         return html_list
