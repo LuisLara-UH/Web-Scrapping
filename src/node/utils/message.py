@@ -51,6 +51,9 @@ RET_POST_PRED = 'ret-post-pred'
 GET_CHECK_NODE = 'get-check-node'
 RET_CHECK_NODE = 'ret-check-node'
 
+GET_POST_URL_DICT = 'get-post-url-dict'
+RET_POST_URL_DICT = 'ret-post-url-dict'
+
 
 class Message:
     def __init__(self, action: str = '', parameters: str = ''):

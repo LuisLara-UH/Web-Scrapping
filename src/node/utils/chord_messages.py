@@ -51,15 +51,12 @@ def ret_succ_of_node(node: Finger):
 
 def get_pred_of_node(sender: Sender, conn_node: NodeReference):
     msg = Message(action=GET_PRED_NODE)
-    print('get pred 1')
     ret_msg = sender.request(conn_node=conn_node, msg=msg)
-    print('get pred 2')
 
     assert ret_msg.action == RET_PRED_NODE, "Incorrect reply for successor node request"
 
     successor = decode_finger(ret_msg.parameters)
 
-    print('return successor')
     return successor
 
 
@@ -116,7 +113,7 @@ def ret_post_scrap_node() -> Message:
 
 def req_scrap_url(sender: Sender, conn_node: NodeReference, url: str):
     msg = Message(action=GET_SCRAP_URL, parameters=url)
-    ret_msg = sender.request(conn_node=conn_node, msg=msg, wait_time=-1)
+    ret_msg = sender.request(conn_node=conn_node, msg=msg, wait_time=180000)
 
     assert ret_msg.action == RET_SCRAP_URL, 'Incorrect reply for get scrapper url'
     assert not ret_msg.parameters == '', 'Invalid url info'
@@ -126,10 +123,10 @@ def req_scrap_url(sender: Sender, conn_node: NodeReference, url: str):
 
 def req_chord_url(sender: Sender, conn_node: NodeReference, url: str):
     req_msg = Message(action=GET_CHORD_URL, parameters=url)
-    ret_msg = sender.request(conn_node=conn_node, msg=req_msg)
+    ret_msg = sender.request(conn_node=conn_node, msg=req_msg, wait_time=180000)
 
     assert ret_msg.action == RET_CHORD_URL, "Incorrect answer to get url from chord node"
-    
+
     assert not ret_msg.parameters == '', "Incorrect parameters in answer to get url from chord node"
 
     return ret_msg.parameters
@@ -167,3 +164,14 @@ def req_check_node(sender: Sender, conn_node: NodeReference) -> Message:
 
 def ret_check_node() -> Message:
     return Message(action=RET_CHECK_NODE)
+
+
+def req_post_url_dict(sender: Sender, conn_node: NodeReference, url_dict):
+    req_msg = Message(action=GET_POST_URL_DICT, parameters=code_url_dict(url_dict))
+    rep_msg = sender.request(conn_node, req_msg)
+
+    assert rep_msg.action == RET_POST_URL_DICT, 'Incorrect answer to post urls info'
+
+
+def ret_post_url_dict() -> Message:
+    return Message(action=RET_POST_URL_DICT)

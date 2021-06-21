@@ -37,37 +37,35 @@ class ChordNode(Node):
             print('Stabilizing...')
             try:
                 if not self.successor().same_ref(self.my_finger):
-                    print('Stabilizing...1')
                     succ_pred = get_pred_of_node(self.sender, self.successor())
                     print(succ_pred.id)
-                    print('Stabilizing...2')
-                    if belongs_to_interval(succ_pred.id, self.id, self.successor().id):
+                    if belongs_to_interval(succ_pred.id, self.id, self.successor().id) and \
+                            not req_check_node(self.sender, succ_pred).action == RET_NOT_REP:
                         self.finger_table[1] = succ_pred
                     req_post_pred(self.sender, self.successor(), self.my_finger)
-                    print('Stabilizing...3')
             except Exception as e:
                 print('Exception: ', e)
 
             self.check_successor()
             self.fix_fingers()
+            self.update_succ_dict()
 
-            time.sleep(3)
+            time.sleep(random.randint(3, 10))
 
     def check_successor(self):
         print('Checking successor...')
-        if len(self.successors) == 0 and not self.my_finger.same_ref(self.successor()):
-            self.successors.append(self.successor())
+        if (len(self.successors) == 0 or not self.successor().same_ref(self.successors[0])) \
+                and not self.my_finger.same_ref(self.successor()):
+            self.successors = [self.successor()] + self.successors
 
-        print('Checking successor...1')
         self.update_successors()
-        print('Checking successor...2')
+        print('Successors:', str(len(self.successors)))
 
     def update_successors(self):
         while len(self.successors) > 0:
-            print('Checking successor...3')
             rep_msg = req_check_node(self.sender, self.successors[0])
-            print('Checking successor...4')
             if rep_msg.action == RET_NOT_REP:
+                print('Deleted successor cause not reply1:', self.successors[0].id)
                 self.successors.pop(0)
             elif not rep_msg.action == RET_CHECK_NODE:
                 print('Exception: Incorrect answer to check successor')
@@ -75,21 +73,21 @@ class ChordNode(Node):
             else:
                 break
 
-        print('Checking successor...5')
-
         while 5 > len(self.successors) > 0:
-            print('Checking successor...6')
-            rep_msg = self.sender.request(self.successors[len(self.successors) - 1], Message(action=GET_SUCC_NODE))
-            print('Checking successor...7')
+            rep_msg = self.sender.request(self.successors[-1], Message(action=GET_SUCC_NODE))
             if rep_msg.action == RET_NOT_REP:
+                print('Deleted successor cause not reply2:', self.successors[-1].id)
                 self.successors.pop(len(self.successors) - 1)
             elif rep_msg.action == RET_SUCC_NODE:
                 succ_node = decode_finger(rep_msg.parameters)
-                if succ_node.same_ref(self.my_finger):
+                if succ_node.same_ref(self.my_finger) or \
+                        succ_node.same_ref(self.successors[-1]) or \
+                        req_check_node(self.sender, succ_node).action == RET_NOT_REP:
                     break
+
+                print('Added successor from req:', succ_node.id)
                 self.successors.append(succ_node)
 
-        print('Checking successor...8')
         if len(self.successors) > 0:
             self.finger_table[1] = self.successors[0]
         else:
@@ -105,6 +103,18 @@ class ChordNode(Node):
             self.finger_table[i] = succ_node
         except Exception as e:
             print('Exception: ', e)
+
+    def update_succ_dict(self):
+        if (not self.successor().same_ref(self.my_finger)) and not self.predecessor().same_ref(self.my_finger):
+            dict_to_send = {}
+            for key in self.dict_url.keys():
+                if belongs_to_interval(key, self.predecessor().id, self.id):
+                    dict_to_send[key] = self.dict_url[key]
+
+            try:
+                req_post_url_dict(sender=self.sender, conn_node=self.successor(), url_dict=dict_to_send)
+            except Exception as e:
+                print('Exception:', e)
 
     def req_chord_node(self):
         return self.get_chord_node()
@@ -154,6 +164,10 @@ class ChordNode(Node):
 
         if msg.action == GET_CHECK_NODE:
             return ret_check_node()
+
+        if msg.action == GET_POST_URL_DICT:
+            self.update_url_dict(msg.parameters)
+            return ret_post_url_dict()
 
         return Message(action='')
 
@@ -308,3 +322,8 @@ class ChordNode(Node):
         else:
             successor = self.find_successor(id=url_hash)
             req_set_url(sender=self.sender, conn_node=successor, url=url, url_info=url_info)
+
+    def update_url_dict(self, url_dict: str):
+        dict_decoded = decode_url_dict(url_dict)
+        for key in dict_decoded.keys():
+            self.dict_url[key] = dict_decoded[key]

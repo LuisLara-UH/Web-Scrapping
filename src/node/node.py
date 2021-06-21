@@ -1,4 +1,6 @@
 import zmq
+import threading
+import time
 
 from .utils import message
 from .utils.node_reference import NodeReference
@@ -15,6 +17,8 @@ class Node:
         # connecting node address
         self.conn_node: NodeReference = conn_node
         self.chord_node = self.req_chord_node()
+
+        self.mutex = threading.Lock()
 
     def req_chord_node(self):
         msg = message.Message(action=message.GET_CHORD_NODE)

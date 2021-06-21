@@ -38,3 +38,21 @@ def code_url_info(url: str, url_info: str):
 def decode_url_info(url_pack: str):
     url, url_info = url_pack.split('%%')
     return url, url_info
+
+
+def code_url_dict(url_dict):
+    code = ''
+    for key in url_dict.keys():
+        code += str(key) + '%%' + url_dict[key] + '%%'
+    code = code[:-2]
+
+    return code
+
+
+def decode_url_dict(url_dict: str):
+    args = url_dict.split('%%')
+    new_dict = {}
+    while len(args) > 1:
+        new_dict[int(args.pop(0))] = args.pop(0)
+
+    return new_dict

@@ -58,6 +58,7 @@ class WebNode:
             belongs_to_domain = re.search(self.domain, link)
             if belongs_to_domain:
                 res.append(link)
+        print('res', res)
         return res
 
     def get_html_list(self, links: list):
